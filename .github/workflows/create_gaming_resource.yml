@@ -34,9 +34,9 @@ jobs:
         run: gcloud auth activate-service-account --key-file=gcloud-service-key.json
 
       - name: Create Gaming VM Instance
-        # env:
-        #   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-        #   SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
         run: |
           # Replace with your `gcloud compute instances create` command using GitHub Secrets for sensitive details
           gcloud compute instances create instance-20241026-041618 \

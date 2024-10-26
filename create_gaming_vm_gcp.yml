@@ -1,0 +1,62 @@
+name: Create Gaming VM in GCP
+
+on:
+  workflow_dispatch:  # Allows manual triggers
+  push:
+    branches:
+      - main  # Runs when you push to the main branch
+
+jobs:
+  create-gaming-vm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Create JSON credentials file
+          id: create-json-credentials
+        uses: jsdaniell/create-json@v1.2.3
+        with:
+          name: "gcloud-service-key.json"
+          json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+          
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          version: 'latest'
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          export_default_credentials: true
+
+  
+      - name: Authenticate to Google Cloud
+        run: gcloud auth activate-service-account --key-file=gcloud-service-key.json
+
+      - name: Create Gaming VM Instance
+        # env:
+        #   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        #   SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+        run: |
+          # Replace with your `gcloud compute instances create` command using GitHub Secrets for sensitive details
+          gcloud compute instances create instance-20241026-041618 \
+            --project=$PROJECT_ID \
+            --zone=us-east4-c \
+            --machine-type=n1-highmem-4 \
+            --network-interface=network-tier=PREMIUM,stack-type=IPV4_ONLY,subnet=default \
+            --can-ip-forward \
+            --no-restart-on-failure \
+            --maintenance-policy=TERMINATE \
+            --provisioning-model=STANDARD \
+            --service-account=$SERVICE_ACCOUNT \
+            --scopes=https://www.googleapis.com/auth/devstorage.read_only,https://www.googleapis.com/auth/logging.write,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/service.management.readonly,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/trace.append \
+            --accelerator=count=1,type=nvidia-tesla-p4 \
+            --enable-display-device \
+            --tags=http-server,https-server \
+            --create-disk=auto-delete=yes,boot=yes,device-name=instance-20241026-041618,image=projects/windows-cloud/global/images/windows-server-2022-dc-v20241010,mode=rw,size=150,type=pd-ssd \
+            --create-disk=device-name=disk-1,mode=rw,name=disk-1,size=250,type=pd-ssd \
+            --no-shielded-secure-boot \
+            --shielded-vtpm \
+            --shielded-integrity-monitoring \
+            --labels=goog-ec-src=vm_add-gcloud \
+            --reservation-affinity=any
